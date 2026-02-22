@@ -39,7 +39,16 @@ components:
         - name: postgres
           targetPort: 5432
           exposure: internal
+  - name: gallery-image
+    image:
+      imageName: gallery-app:latest
+      dockerfile:
+        uri: src/Dockerfile
+        buildContext: src
 commands:
+  - id: build-image
+    apply:
+      component: gallery-image
   - id: build
     exec:
       component: go-app
