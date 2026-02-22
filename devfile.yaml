@@ -1,0 +1,58 @@
+schemaVersion: 2.2.0
+metadata:
+  name: gallery-app
+components:
+  - name: go-app
+    container:
+      image: golang:1.26
+      memoryLimit: 1024Mi
+      mountSources: true
+      command: ['tail', '-f', '/dev/null']
+      env:
+        - name: DB_HOST
+          value: 127.0.0.1
+        - name: DB_USER
+          value: gorm
+        - name: DB_PASS
+          value: gorm
+        - name: DB_NAME
+          value: gorm
+        - name: DB_PORT
+          value: "5432"
+        - name: SERVER_ADDRESS
+          value: "0.0.0.0:8080"
+      endpoints:
+        - name: http
+          targetPort: 8080
+  - name: postgres
+    container:
+      image: postgres:15
+      memoryLimit: 512Mi
+      env:
+        - name: POSTGRES_USER
+          value: gorm
+        - name: POSTGRES_PASSWORD
+          value: gorm
+        - name: POSTGRES_DB
+          value: gorm
+      endpoints:
+        - name: postgres
+          targetPort: 5432
+          exposure: internal
+commands:
+  - id: build
+    exec:
+      component: go-app
+      commandLine: "cd src && go build -o main ./main.go"
+      workingDir: ${PROJECT_SOURCE}
+      group:
+        kind: build
+        isDefault: true
+  - id: run
+    exec:
+      component: go-app
+      commandLine: "cd src && ./main"
+      workingDir: ${PROJECT_SOURCE}
+      group:
+        kind: run
+        isDefault: true

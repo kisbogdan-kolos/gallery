@@ -1,29 +1,24 @@
-# Use the official Golang image as a base
-FROM golang:1.26 AS builder
+# syntax=docker/dockerfile:1
 
-# Set the Current Working Directory inside the container
+# Build the application from source
+FROM golang:1.26 AS build-stage
+
 WORKDIR /app
 
-# Copy go.mod and go.sum files
-COPY go.mod go.sum ./
-
-# Download all dependencies. Dependencies will be cached if the go.mod and go.sum files are not changed
+COPY . .
 RUN go mod download
 
-# Copy the source code into the container
-COPY . .
+RUN CGO_ENABLED=0 GOOS=linux go build -o /gallery
 
-# Build the Go app
-RUN go build -o main ./main.go
+# Deploy the application binary into a lean image
+FROM gcr.io/distroless/base-debian11 AS build-release-stage
 
-# Start a new stage from scratch
-FROM alpine:latest
+WORKDIR /
 
-# Set the Current Working Directory inside the container
-WORKDIR /root/
+COPY --from=build-stage /gallery /gallery
 
-# Copy the Pre-built binary file from the previous stage
-COPY --from=builder /app/main .
+EXPOSE 8080
 
-# Command to run the executable
-CMD ["./main"]
+USER nonroot:nonroot
+
+ENTRYPOINT ["/gallery"]
