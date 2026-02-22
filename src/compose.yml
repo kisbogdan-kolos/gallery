@@ -1,0 +1,9 @@
+services:
+  db:
+    image: postgres
+    environment:
+      POSTGRES_USER: gorm
+      POSTGRES_PASSWORD: gorm
+      POSTGRES_DB: gorm
+    ports:
+     - 5432:5432
