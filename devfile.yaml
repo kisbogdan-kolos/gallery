@@ -18,8 +18,8 @@ components:
     image:
       imageName: gallery:latest
       dockerfile:
-        uri: docker/Dockerfile
-        buildContext: ./src
+        uri: src/Dockerfile
+        buildContext: src
         rootRequired: false
   - name: kubernetes-deploy
     attributes:
