@@ -1,0 +1,33 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: gallery
+  labels:
+    app: gallery
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: gallery
+  template:
+    metadata:
+      labels:
+        app: gallery
+    spec:
+      containers:
+        - name: gallery
+          # The image name here MUST match the imageName in the devfile.
+          image: image-registry.openshift-image-registry.svc:5000/lab/gallery:latest
+          ports:
+            - containerPort: 8080
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: gallery
+spec:
+  selector:
+    app: gallery
+  ports:
+    - port: 8080
+      targetPort: 8080

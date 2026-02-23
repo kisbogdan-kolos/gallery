@@ -1,62 +1,29 @@
 schemaVersion: 2.2.0
 metadata:
   name: gallery
-  displayName: Gallery + Postgres
-  language: Go
-  projectType: Go
-
 components:
   - name: gallery-image
     image:
-      imageName: gallery:latest
+      # This is the standard internal OpenShift registry path
+      imageName: image-registry.openshift-image-registry.svc:5000/lab/gallery:latest
       dockerfile:
         uri: src/Dockerfile
         buildContext: src
-        rootRequired: true
-
-  - name: gallery
-    container:
-      image: gallery:latest
-      env:
-        - name: DB_HOST
-          value: 127.0.0.1
-        - name: DB_USER
-          value: gorm
-        - name: DB_PASS
-          value: gorm
-        - name: DB_NAME
-          value: gorm
-        - name: DB_PORT
-          value: "5432"
-      endpoints:
-        - name: http
-          targetPort: 8080
-          exposure: public
-
-  - name: postgres
-    container:
-      image: postgres:18.2
-      env:
-        - name: POSTGRES_USER
-          value: gorm
-        - name: POSTGRES_PASSWORD
-          value: gorm
-        - name: POSTGRES_DB
-          value: gorm
-
+  - name: gallery-deploy
+    kubernetes:
+      uri: deploy.yaml
 commands:
-  - id: build-image
-    apply:
-      component: gallery-image
-  - id: run
-    exec:
-      component: gallery
-      commandLine: "true"
   - id: deploy
     composite:
-      commands:
+      command:
         - build-image
-        - run
+        - apply-k8s
       group:
         kind: deploy
         isDefault: true
+  - id: build-image
+    apply:
+      component: gallery-image
+  - id: apply-k8s
+    apply:
+      component: gallery-deploy
