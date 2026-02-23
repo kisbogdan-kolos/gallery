@@ -1,51 +1,61 @@
 schemaVersion: 2.2.0
 metadata:
-  name: go
-  displayName: Go Runtime
-  icon: https://raw.githubusercontent.com/devfile-samples/devfile-stack-icons/main/golang.svg
+  name: gallery
+  displayName: Gallery + Postgres
   language: Go
   projectType: Go
-  tags:
-    - Go
-  attributes:
-    alpha.dockerimage-port: 8080
-parent:
-  id: go
-  registryUrl: 'https://registry.devfile.io'
-  version: 1.4.0
+
 components:
-  - name: image-build
+  - name: gallery-image
     image:
       imageName: gallery:latest
       dockerfile:
         uri: src/Dockerfile
         buildContext: src
         rootRequired: true
-  - name: kubernetes-deploy
-    attributes:
-      deployment/replicas: 1
-      deployment/cpuRequest: 100m
-      deployment/memoryRequest: 128Mi
-      deployment/container-port: 8080
-    kubernetes:
-      uri: deploy.yaml
+
+  - name: gallery
+    container:
+      image: gallery:latest
+      env:
+        - name: DB_HOST
+          value: 127.0.0.1
+        - name: DB_USER
+          value: gorm
+        - name: DB_PASS
+          value: gorm
+        - name: DB_NAME
+          value: gorm
+        - name: DB_PORT
+          value: "5432"
       endpoints:
-      - name: http-8080
-        targetPort: 8080
-        path: /
-        secure: true
+        - name: http
+          targetPort: 8080
+          exposure: public
+
+  - name: postgres
+    container:
+      image: postgres:18.2
+      env:
+        - name: POSTGRES_USER
+          value: gorm
+        - name: POSTGRES_PASSWORD
+          value: gorm
+        - name: POSTGRES_DB
+          value: gorm
+
 commands:
   - id: build-image
     apply:
-      component: image-build
-  - id: deployk8s
-    apply:
-      component: kubernetes-deploy
-  - id: deploy
-    composite:
-      commands:
-        - build-image
-        - deployk8s
-      group:
-        kind: deploy
-        isDefault: true
+      component: gallery-image
+    group:
+      kind: build
+      isDefault: true
+
+  - id: run
+    exec:
+      component: gallery
+      commandLine: "true"
+    group:
+      kind: run
+      isDefault: true
