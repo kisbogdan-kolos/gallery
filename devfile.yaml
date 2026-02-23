@@ -20,7 +20,7 @@ components:
       dockerfile:
         uri: src/Dockerfile
         buildContext: src
-        rootRequired: false
+        rootRequired: true
   - name: kubernetes-deploy
     attributes:
       deployment/replicas: 1
