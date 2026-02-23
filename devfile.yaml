@@ -4,7 +4,6 @@ metadata:
 components:
   - name: gallery-image
     image:
-      # This is the standard internal OpenShift registry path
       imageName: image-registry.openshift-image-registry.svc:5000/lab/gallery:latest
       dockerfile:
         uri: src/Dockerfile
@@ -15,7 +14,7 @@ components:
 commands:
   - id: deploy
     composite:
-      command:
+      commands:
         - build-image
         - apply-k8s
       group:
