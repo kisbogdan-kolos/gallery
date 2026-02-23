@@ -10,19 +10,26 @@ components:
         buildContext: src
   - name: gallery-deploy
     kubernetes:
-      uri: deploy.yaml
+      uri: gallery.yaml
+  - name: postgres-deploy
+    kubernetes:
+      uri: postgres.yaml
 commands:
   - id: deploy
     composite:
       commands:
         - build-image
-        - apply-k8s
+        - apply-postgres
+        - apply-gallery
       group:
         kind: deploy
         isDefault: true
   - id: build-image
     apply:
       component: gallery-image
-  - id: apply-k8s
+  - id: apply-gallery
     apply:
       component: gallery-deploy
+  - id: apply-postgres
+    apply:
+      component: postgres-deploy

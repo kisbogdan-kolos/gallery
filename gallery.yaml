@@ -1,0 +1,47 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: gallery
+  labels:
+    app: gallery
+    app.kubernetes.io/part-of: gallery-app # Helps visual grouping in Topology
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: gallery
+  template:
+    metadata:
+      labels:
+        app: gallery
+    spec:
+      containers:
+        - name: gallery
+          image: image-registry.openshift-image-registry.svc:5000/lab/gallery:latest
+          ports:
+            - containerPort: 8080
+          env:
+            - name: DB_HOST
+              value: "postgres"
+            - name: DB_PORT
+              value: "5432"
+            - name: DB_USER
+              value: "galleryuser"
+            - name: DB_PASS
+              value: "gallerypass"
+            - name: DB_NAME
+              value: "gallerydb"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: gallery
+  labels:
+    app: gallery
+    app.kubernetes.io/part-of: gallery-app
+spec:
+  selector:
+    app: gallery
+  ports:
+    - port: 8080
+      targetPort: 8080
