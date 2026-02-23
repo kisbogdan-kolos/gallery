@@ -6,7 +6,7 @@ components:
     image:
       imageName: image-registry.openshift-image-registry.svc:5000/lab/gallery:latest
       dockerfile:
-        uri: src/Dockerfile
+        uri: Dockerfile
         buildContext: src
   - name: gallery-deploy
     kubernetes:
