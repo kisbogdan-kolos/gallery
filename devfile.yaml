@@ -48,14 +48,14 @@ commands:
   - id: build-image
     apply:
       component: gallery-image
-    group:
-      kind: build
-      isDefault: true
+      group:
+        kind: build
+        isDefault: true
 
   - id: run
     exec:
       component: gallery
       commandLine: "true"
-    group:
-      kind: run
-      isDefault: true
+      group:
+        kind: run
+        isDefault: true
