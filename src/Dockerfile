@@ -13,6 +13,8 @@ RUN CGO_ENABLED=0 GOOS=linux go build -o /gallery
 # Deploy the application binary into a lean image
 FROM alpine AS build-release-stage
 
+RUN apk add --no-cache tzdata
+
 WORKDIR /
 
 COPY --from=build-stage /gallery /gallery

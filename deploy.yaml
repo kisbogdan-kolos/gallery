@@ -1,0 +1,129 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: gallery
+  labels:
+    app: gallery
+    app.kubernetes.io/part-of: gallery-app
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: gallery
+  template:
+    metadata:
+      labels:
+        app: gallery
+    spec:
+      containers:
+        - name: gallery
+          image: kisbogdan/gallery:latest
+          ports:
+            - containerPort: 8080
+          env:
+            - name: DB_HOST
+              value: "postgres"
+            - name: DB_PORT
+              value: "5432"
+            - name: DB_USER
+              value: "galleryuser"
+            - name: DB_PASS
+              value: "gallerypass"
+            - name: DB_NAME
+              value: "gallerydb"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: gallery
+  labels:
+    app: gallery
+    app.kubernetes.io/part-of: gallery-app
+spec:
+  selector:
+    app: gallery
+  ports:
+    - port: 8080
+      targetPort: 8080
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: postgres-volume
+  labels:
+    type: local
+    app: postgres
+spec:
+  storageClassName: manual
+  capacity:
+    storage: 200Mi
+  accessModes:
+    - ReadWriteMany
+  hostPath:
+    path: /data/postgresql
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: postgres-volume-claim
+  labels:
+    app: postgres
+spec:
+  storageClassName: manual
+  accessModes:
+    - ReadWriteMany
+  resources:
+    requests:
+      storage: 200Mi
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: postgres
+  labels:
+    app: postgres
+    app.kubernetes.io/part-of: gallery-app
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: postgres
+  template:
+    metadata:
+      labels:
+        app: postgres
+    spec:
+      containers:
+        - name: postgres
+          image: postgres:18.2
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 5432
+          env:
+            - name: POSTGRES_USER
+              value: "galleryuser"
+            - name: POSTGRES_PASSWORD
+              value: "gallerypass"
+            - name: POSTGRES_DB
+              value: "gallerydb"
+          volumeMounts:
+            - mountPath: /var/lib/postgresql
+              name: postgresdata
+      volumes:
+        - name: postgresdata
+          persistentVolumeClaim:
+            claimName: postgres-volume-claim
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: postgres
+  labels:
+    app: postgres
+    app.kubernetes.io/part-of: gallery-app
+spec:
+  selector:
+    app: postgres
+  ports:
+    - port: 5432
+      targetPort: 5432
