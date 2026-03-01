@@ -1,13 +1,15 @@
-package api
+package user_api
 
 import (
 	"errors"
 	"log"
 	"net/http"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/go-crypt/crypt"
 	"github.com/go-crypt/crypt/algorithm/argon2"
+	api_common "github.com/kisbogdan-kolos/gallery/api/common_api"
 	"github.com/kisbogdan-kolos/gallery/db"
 	"gorm.io/gorm"
 )
@@ -26,7 +28,31 @@ type UserRegister struct {
 	DisplayName string `json:"displayname"`
 }
 
-func registerUserEndpoints(router *gin.RouterGroup) {
+type UserReturn struct {
+	Username     string    `json:"username"`
+	ID           uint      `json:"id"`
+	DisplayName  string    `json:"displayname"`
+	RegisterDate time.Time `json:"registered"`
+	Admin        bool      `json:"admin"`
+}
+
+type UserReturnWithToken struct {
+	UserReturn
+
+	Token string `json:"token"`
+}
+
+func User2Return(user *db.User) *UserReturn {
+	return &UserReturn{
+		Username:     user.UserName,
+		DisplayName:  user.DisplayName,
+		RegisterDate: user.CreatedAt,
+		Admin:        user.Admin,
+		ID:           user.ID,
+	}
+}
+
+func Register(router *gin.RouterGroup) {
 	h, err := argon2.New(argon2.WithProfileRFC9106LowMemory())
 	if err != nil {
 		log.Fatal(err)
@@ -42,6 +68,7 @@ func registerUserEndpoints(router *gin.RouterGroup) {
 	router.POST("/register", handleRegister)
 	router.POST("/login", handleLogin)
 	router.GET("/me", handleMe)
+	router.GET("/all", handleAll)
 }
 
 func handleRegister(c *gin.Context) {
@@ -75,7 +102,17 @@ func handleRegister(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusCreated, gin.H{"id": user.ID})
+	token, err := api_common.GenerateJWT(&user)
+	if err != nil {
+		log.Printf("JWT generate error: %v", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "internal server error"})
+		return
+	}
+
+	c.JSON(http.StatusOK, UserReturnWithToken{
+		UserReturn: *User2Return(&user),
+		Token:      token,
+	})
 }
 
 func handleLogin(c *gin.Context) {
@@ -89,50 +126,88 @@ func handleLogin(c *gin.Context) {
 
 	var user db.User
 
-	res := db.DB.Find(&user, "user_name = ?", login.Username)
+	res := db.DB.Where(&db.User{UserName: login.Username}).First(&user)
 	if res.Error != nil {
-		if errors.Is(res.Error, gorm.ErrRecordNotFound) {
-			c.JSON(http.StatusUnauthorized, gin.H{"error": "invalid username or password"})
-			return
-		}
-
+		log.Printf("DB error: %v", res.Error)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "internal server error"})
+		return
+	}
+
+	if res.RowsAffected != 1 {
+		log.Printf("User not found.")
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "invalid username or password"})
 		return
 	}
 
 	digest, err := decoder.Decode(user.Password)
 	if err != nil {
+		log.Printf("Password decode error: %v", err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "internal server error"})
 		return
 	}
 
 	if !digest.Match(login.Password) {
+		log.Printf("Password does not match for user %v", login.Username)
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "invalid username or password"})
 		return
 	}
 
-	token, err := generateJWT(&user)
+	token, err := api_common.GenerateJWT(&user)
 	if err != nil {
+		log.Printf("JWT generate error: %v", err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "internal server error"})
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"token": token})
+	c.JSON(http.StatusOK, UserReturnWithToken{
+		UserReturn: *User2Return(&user),
+		Token:      token,
+	})
 }
 
 func handleMe(c *gin.Context) {
-	ok, claims := validateJWT(c)
+	ok, claims := api_common.ValidateJWT(c)
 	if !ok {
 		return
 	}
 
 	var user db.User
 
-	res := db.DB.Find(&user, claims.ID)
+	res := db.DB.Where(claims.ID).First(&user)
 	if res.Error != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "internal server error"})
 		return
 	}
 
-	c.JSON(http.StatusOK, user)
+	c.JSON(http.StatusOK, User2Return(&user))
+}
+
+func handleAll(c *gin.Context) {
+	ok, claims := api_common.ValidateJWT(c)
+	if !ok {
+		return
+	}
+
+	if !claims.Admin {
+		log.Printf("User %v not admin", claims.ID)
+		c.JSON(http.StatusForbidden, gin.H{"error": "only admins allowed to list users"})
+		return
+	}
+
+	var users []db.User
+	res := db.DB.Find(&users)
+
+	var returnUsers []*UserReturn
+
+	if res.RowsAffected != 1 {
+		log.Printf("Users not found.")
+		c.JSON(http.StatusUnauthorized, returnUsers)
+		return
+	}
+
+	for _, user := range users {
+		returnUsers = append(returnUsers, User2Return(&user))
+	}
+
+	c.JSON(http.StatusOK, returnUsers)
 }

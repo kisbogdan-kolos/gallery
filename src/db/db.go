@@ -27,9 +27,12 @@ type User struct {
 type Image struct {
 	gorm.Model
 
-	ImageID uuid.UUID `gorm:"unique;not null"`
+	Name string `gorm:"not null"`
+
+	ImageID *uuid.UUID `gorm:"unique"`
 
 	CreatedBy uint `gorm:"not null"`
+	User      User `gorm:"foreignKey:CreatedBy"`
 }
 
 func DbConnect() error {
