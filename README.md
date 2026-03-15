@@ -1,6 +1,50 @@
 # Simple gallery app
 
+## Architecture
+
+The deployed app consists of a couple of elements, these are:
+
+- frontend
+- backend
+- database
+- object storage
+
+### Frontend
+
+The frontend is written in React + Vite. There is no extra fluff, just a basic frontend. There is soma AI generated code, but the main architecture and design decisions were made without AI.
+
+The deployed app builds the frontend, and serves it from static files.
+
+### Backend
+
+It is written in Go + Gin + GORM. The database is currently Postgres, but it can be easily changed, if needed. There is also an object storage for the images, which can be any S3 compatible one.
+
+The backend is completely stateless, so it can be freely scaled if needed.
+
+The backend serves the frontend, which is bundled into the container during building.
+
+### Database
+
+Currently, the system runs a simple Postgres instance with a persistent volume attached to it.
+
+### Object storage
+
+I choose SeaweedFS as the object storage, because it can be run in a single server mode, which is ideal for development and demo systems.
+
+### Communications
+
+The architecture is simple: The backend(s) connect to the Postgres database and Object storage, and fulfill every request using these resources.
+
 ## Deploying
+
+Currently, the deployment consists of these steps:
+
+1. commit is pushed to the `master` branch of the repo
+1. GitHub Actions pipeline starts, and builds the Docker image containing the frontend and backend
+1. the image is pushed to DockerHub
+1. BME Cloud OpenShift is triggered to restart the deployment, which automatically pulls the latest Docker image
+
+If the deployment YAML changes, it must be manually updated in OpenShift.
 
 ### Image build
 
