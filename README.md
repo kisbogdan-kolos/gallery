@@ -2,7 +2,9 @@
 
 ## Deploying
 
-Currently, the build can only be done locally, and there is no CI/CD. This will change in the future.
+The project is equipped with a GitHub Actions workflow that automatically builds and pushes the Docker image to the registry upon changes to the `main` branch. 
+
+However, you can also build it locally:
 
 ```bash
 cd src
