@@ -1,14 +1,16 @@
 package image_api
 
 import (
+	"log"
 	"net/http"
 	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
-	api_common "github.com/kisbogdan-kolos/gallery/api/common_api"
+	common_api "github.com/kisbogdan-kolos/gallery/api/common"
 	user_api "github.com/kisbogdan-kolos/gallery/api/user"
 	"github.com/kisbogdan-kolos/gallery/db"
+	"github.com/kisbogdan-kolos/gallery/storage"
 )
 
 type ImageCreate struct {
@@ -23,14 +25,29 @@ type ImageReturn struct {
 	ImageID  *uuid.UUID           `json:"image"`
 }
 
+func Image2Return(image *db.Image) *ImageReturn {
+	return &ImageReturn{
+		ID:       image.ID,
+		Name:     image.Name,
+		Uploaded: image.CreatedAt,
+		Uploader: user_api.User2Return(&image.User),
+		ImageID:  image.ImageID,
+	}
+}
+
 func Register(router *gin.RouterGroup) {
 	router.POST("", handleCreate)
 	router.GET("", handleAll)
 	router.DELETE("/:id", handleDelete)
+	router.POST("/:id/upload", handleUpload)
+}
+
+func RegisterStorage(router *gin.RouterGroup) {
+	router.GET("/:id", handleImageGet)
 }
 
 func handleCreate(c *gin.Context) {
-	ok, claims := api_common.ValidateJWT(c)
+	ok, claims := common_api.ValidateJWT(c)
 	if !ok {
 		return
 	}
@@ -52,11 +69,18 @@ func handleCreate(c *gin.Context) {
 	}
 
 	if err := db.DB.Create(&image).Error; err != nil {
+		log.Printf("Failed to create image")
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "internal server error"})
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"id": image.ID})
+	if err := db.DB.First(&image.User, image.CreatedBy).Error; err != nil {
+		log.Printf("Failed to find user for image: %v", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "internal server error"})
+		return
+	}
+
+	c.JSON(http.StatusOK, Image2Return(&image))
 }
 
 func handleAll(c *gin.Context) {
@@ -67,26 +91,20 @@ func handleAll(c *gin.Context) {
 		return
 	}
 
-	var returns []ImageReturn
+	var returns []*ImageReturn
 	for _, img := range images {
-		returns = append(returns, ImageReturn{
-			ID:       img.ID,
-			Name:     img.Name,
-			Uploaded: img.CreatedAt,
-			Uploader: user_api.User2Return(&img.User),
-			ImageID:  img.ImageID,
-		})
+		returns = append(returns, Image2Return(&img))
 	}
 
 	if returns == nil {
-		returns = []ImageReturn{}
+		returns = []*ImageReturn{}
 	}
 
 	c.JSON(http.StatusOK, returns)
 }
 
 func handleDelete(c *gin.Context) {
-	ok, claims := api_common.ValidateJWT(c)
+	ok, claims := common_api.ValidateJWT(c)
 	if !ok {
 		return
 	}
@@ -109,4 +127,64 @@ func handleDelete(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{"status": "deleted"})
+}
+
+func handleUpload(c *gin.Context) {
+	ok, claims := common_api.ValidateJWT(c)
+	if !ok {
+		return
+	}
+
+	id := c.Param("id")
+	var image db.Image
+	err := db.DB.Preload("User").First(&image, id).Error
+	if err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "image not found"})
+		return
+	}
+
+	if image.CreatedBy != claims.UserID && !claims.Admin {
+		c.JSON(http.StatusForbidden, gin.H{"error": "forbidden"})
+		return
+	}
+
+	if image.ImageID != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "image already updated"})
+		return
+	}
+
+	imageId := uuid.New()
+	contentType := c.Request.Header.Get("Content-Type")
+	contentLength := c.Request.ContentLength
+	err = storage.Set(imageId, contentType, c.Request.Body, uint(contentLength))
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "internal server error"})
+		return
+	}
+
+	image.ImageID = &imageId
+	err = db.DB.Save(&image).Error
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "internal server error"})
+		return
+	}
+
+	c.JSON(http.StatusOK, Image2Return(&image))
+}
+
+func handleImageGet(c *gin.Context) {
+	id := c.Param("id")
+	uuid, err := uuid.Parse(id)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid uuid"})
+		return
+	}
+
+	reader, size, contentType, err := storage.Get(uuid)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "internal server error"})
+		return
+	}
+
+	c.DataFromReader(http.StatusOK, int64(size), contentType, reader, map[string]string{})
 }

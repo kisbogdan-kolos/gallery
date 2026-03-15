@@ -7,11 +7,16 @@ import (
 	"github.com/kisbogdan-kolos/gallery/api"
 	"github.com/kisbogdan-kolos/gallery/db"
 	"github.com/kisbogdan-kolos/gallery/helper"
+	"github.com/kisbogdan-kolos/gallery/storage"
 )
 
 func main() {
 	err := db.DbConnect()
+	if err != nil {
+		log.Fatal(err)
+	}
 
+	err = storage.Init()
 	if err != nil {
 		log.Fatal(err)
 	}

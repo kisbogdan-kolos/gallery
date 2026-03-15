@@ -9,7 +9,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/go-crypt/crypt"
 	"github.com/go-crypt/crypt/algorithm/argon2"
-	api_common "github.com/kisbogdan-kolos/gallery/api/common_api"
+	common_api "github.com/kisbogdan-kolos/gallery/api/common"
 	"github.com/kisbogdan-kolos/gallery/db"
 	"gorm.io/gorm"
 )
@@ -102,7 +102,7 @@ func handleRegister(c *gin.Context) {
 		return
 	}
 
-	token, err := api_common.GenerateJWT(&user)
+	token, err := common_api.GenerateJWT(&user)
 	if err != nil {
 		log.Printf("JWT generate error: %v", err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "internal server error"})
@@ -152,7 +152,7 @@ func handleLogin(c *gin.Context) {
 		return
 	}
 
-	token, err := api_common.GenerateJWT(&user)
+	token, err := common_api.GenerateJWT(&user)
 	if err != nil {
 		log.Printf("JWT generate error: %v", err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "internal server error"})
@@ -166,7 +166,7 @@ func handleLogin(c *gin.Context) {
 }
 
 func handleMe(c *gin.Context) {
-	ok, claims := api_common.ValidateJWT(c)
+	ok, claims := common_api.ValidateJWT(c)
 	if !ok {
 		return
 	}
@@ -183,7 +183,7 @@ func handleMe(c *gin.Context) {
 }
 
 func handleAll(c *gin.Context) {
-	ok, claims := api_common.ValidateJWT(c)
+	ok, claims := common_api.ValidateJWT(c)
 	if !ok {
 		return
 	}
