@@ -2,6 +2,8 @@
 
 ## Deploying
 
+### Image build
+
 The project is equipped with a GitHub Actions workflow that automatically builds and pushes the Docker image to the registry upon changes to the `main` branch. 
 
 However, you can also build it locally:
@@ -11,7 +13,10 @@ docker build -t kisbogdan/gallery:latest .
 docker push kisbogdan/gallery:latest
 ```
 
-> Warning: Currently, the env variables are burned into the `deploy.yaml`, so the deployment is **not** production-ready.
+Set the following secrets in GitHub Actions:
+
+- `DOCKER_USERNAME`
+- `DOCKER_PASSWORD`
 
 ### Kubernetes
 
@@ -60,6 +65,24 @@ spec:
 ```
 
 Now, your app should be accessible from _https://gallery.svc.apps.okf.fured.cloud.bme.hu/_.
+
+#### Auto-deploy
+
+1. Create a service account in OpenShift
+
+```bash
+oc create serviceaccount github-actions
+oc policy add-role-to-user edit system:serviceaccounts:lab2:github-actions
+oc create token github-actions --duration=315576000s
+```
+
+2. Set the following GitHub Actions secrets:
+
+- `OPENSHIFT_SERVER`: `https://api.okd.fured.cloud.bme.hu:6443`
+- `OPENSHIFT_TOKEN`: \<token\>
+- `OPENSHIFT_NAMESPACE`: \<your namespace\>
+
+3. When pushed to master, the deployment is automatically rolled out.
 
 ### API
 
