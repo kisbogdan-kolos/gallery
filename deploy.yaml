@@ -6,17 +6,25 @@ metadata:
     app.kubernetes.io/part-of: gallery-app
 type: Opaque
 stringData:
+  PROD: "true"
+  GIN_MODE: "release"
   DB_HOST: "postgres"
   DB_PORT: "5432"
   DB_USER: "galleryuser"
   DB_PASS: "gallerypass"
   DB_NAME: "gallerydb"
+  SERVER_ADDRESS: "0.0.0.0:8080"
+  STORAGE_URI: "seaweedfs:8333"
+  STORAGE_BUCKET: "gallery"
+  STORAGE_ACCESS_KEY: "some_access_key"
+  STORAGE_SECRET_KEY: "some_secret_key"
+  JWT_SECRET: "secret"
+  JWT_EXPIRATION: "86400"
+
   POSTGRES_USER: "galleryuser"
   POSTGRES_PASSWORD: "gallerypass"
   POSTGRES_DB: "gallerydb"
-  STORAGE_URI: "seaweedfs:8333"
-  STORAGE_ACCESS_KEY: "some_access_key"
-  STORAGE_SECRET_KEY: "some_secret_key"
+
   AWS_ACCESS_KEY_ID: "some_access_key"
   AWS_SECRET_ACCESS_KEY: "some_secret_key"
 ---
@@ -37,6 +45,13 @@ spec:
       labels:
         app: gallery
     spec:
+      initContainers:
+        - name: wait-for-postgres
+          image: busybox:1.36
+          command: ['sh', '-c', 'until nc -z postgres 5432; do echo "waiting for postgres..."; sleep 2; done;']
+        - name: wait-for-seaweedfs
+          image: busybox:1.36
+          command: ['sh', '-c', 'until nc -z seaweedfs 8333; do echo "waiting for seaweedfs..."; sleep 2; done;']
       containers:
         - name: gallery
           image: kisbogdan/gallery:latest

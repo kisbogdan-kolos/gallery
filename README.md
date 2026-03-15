@@ -26,8 +26,8 @@ kubectl apply -f deploy.yaml
 
 Modify the `deploy.yaml`.
 
-1. remove the `PersistetVolume` section
-1. modify the `PersistentVolumeClaim` `storageClassName` from `manual` to `rook-cephfs`
+1. remove the `PersistetVolume` sections (Postgres and SeaweedFS)
+1. modify the `PersistentVolumeClaim` `storageClassName` from `manual` to `rook-cephfs` (Postgres and SeaweedFS)
 
 Deploy using the modified config using OC command line tool.
 
