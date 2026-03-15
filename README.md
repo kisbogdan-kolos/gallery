@@ -7,7 +7,6 @@ The project is equipped with a GitHub Actions workflow that automatically builds
 However, you can also build it locally:
 
 ```bash
-cd src
 docker build -t kisbogdan/gallery:latest .
 docker push kisbogdan/gallery:latest
 ```
@@ -193,7 +192,7 @@ Reply:
 
 #### POST `/api/image/:id/upload`
 
-Upload the image data for given ID.
+Upload the image data for given ID. Only the creator of an image can upload or an admin, and only if there is no image data uploaded.
 
 Request body: Raw image data
 
@@ -254,7 +253,7 @@ Reply:
 
 #### DELETE `/api/image/:id`
 
-Delete image with given ID.
+Delete image with given ID. Only the creator of the image or an admin can delete.
 
 Reply:
 

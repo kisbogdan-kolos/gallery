@@ -2,6 +2,7 @@ package main
 
 import (
 	"log"
+	"strings"
 
 	"github.com/gin-gonic/gin"
 	"github.com/kisbogdan-kolos/gallery/api"
@@ -21,9 +22,23 @@ func main() {
 		log.Fatal(err)
 	}
 
+	frontendDir := helper.EnvGet("FRONTEND_DIR", "../frontend/dist")
+
 	router := gin.Default()
 
 	api.Register(router.Group("/api"))
+
+	router.Static("/assets", frontendDir+"/assets")
+	router.StaticFile("/favicon.svg", frontendDir+"/favicon.svg")
+
+	router.NoRoute(func(c *gin.Context) {
+		if strings.HasPrefix(c.Request.URL.Path, "/api/") {
+			c.JSON(404, gin.H{"error": "API route not found"})
+			return
+		}
+
+		c.File(frontendDir + "/index.html")
+	})
 
 	addr := helper.EnvGet("SERVER_ADDRESS", "0.0.0.0:8080")
 
