@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
 import { fetchWithAuth } from '../api';
 import { useAuth } from '../AuthContext';
-import { Trash2, X } from 'lucide-react';
+import { Trash2, X, ExternalLink } from 'lucide-react';
 
 interface ImageRecord {
   id: number;
@@ -19,8 +20,19 @@ interface ImageRecord {
 export default function Gallery() {
   const [images, setImages] = useState<ImageRecord[]>([]);
   const [error, setError] = useState('');
-  const [selectedImage, setSelectedImage] = useState<ImageRecord | null>(null);
+  const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
   const { user } = useAuth();
+
+  const selectedImage = images.find((img) => img.id.toString() === id) || null;
+
+  const closeImage = () => {
+    navigate('/');
+  };
+
+  const openImage = (img: ImageRecord) => {
+    navigate(`/image/${img.id}`);
+  };
 
   const loadImages = async () => {
     try {
@@ -69,7 +81,7 @@ export default function Gallery() {
                 <img
                   src={`/api/storage/${img.image}`}
                   alt={img.name}
-                  onClick={() => setSelectedImage(img)}
+                  onClick={() => openImage(img)}
                   className="w-full h-48 object-cover cursor-pointer transition-opacity hover:opacity-90"
                 />
               ) : (
@@ -88,17 +100,28 @@ export default function Gallery() {
                   {new Date(img.uploaded).toLocaleString()}
                 </p>
               </div>
-              {(user?.admin || user?.id === img.uploader.id) && (
-                <div className="mt-4 flex justify-end">
+              <div className="mt-4 flex justify-between items-center">
+                {img.image && (
+                  <a
+                    href={`/api/storage/${img.image}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-indigo-600 hover:text-indigo-900 p-1 flex items-center"
+                    title="Open in new tab"
+                  >
+                    <ExternalLink className="w-5 h-5 mr-1" />
+                  </a>
+                )}
+                {(user?.admin || user?.id === img.uploader.id) && (
                   <button
                     onClick={() => handleDelete(img.id)}
-                    className="text-red-600 hover:text-red-900 p-1"
+                    className="text-red-600 hover:text-red-900 p-1 ml-auto"
                     title="Delete image"
                   >
                     <Trash2 className="w-5 h-5" />
                   </button>
-                </div>
-              )}
+                )}
+              </div>
             </div>
           </div>
         ))}
@@ -112,11 +135,11 @@ export default function Gallery() {
       {selectedImage && selectedImage.image && (
         <div 
           className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black bg-opacity-80"
-          onClick={() => setSelectedImage(null)}
+          onClick={closeImage}
         >
           <button 
             className="absolute top-4 right-4 text-white hover:text-gray-300 p-2"
-            onClick={() => setSelectedImage(null)}
+            onClick={closeImage}
           >
             <X className="w-8 h-8" />
           </button>
@@ -130,8 +153,19 @@ export default function Gallery() {
             <div className="text-white mt-4 text-center">
               <p className="text-xl font-medium">{selectedImage.name}</p>
               <p className="text-sm mt-1 text-gray-300">
-                Uploaded by {selectedImage.uploader.displayname}
+                Uploaded by {selectedImage.uploader.displayname} at {new Date(selectedImage.uploaded).toLocaleString()}
               </p>
+              <a
+                href={`/api/storage/${selectedImage.image}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center mt-3 px-3 py-1 bg-white bg-opacity-20 hover:bg-opacity-30 rounded-md text-sm text-white transition-colors"
+                onClick={(e) => e.stopPropagation()}
+                title="Open raw image"
+              >
+                <ExternalLink className="w-4 h-4 mr-2" />
+                Open original
+              </a>
             </div>
           </div>
         </div>

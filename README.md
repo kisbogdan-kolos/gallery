@@ -72,7 +72,7 @@ Now, your app should be accessible from _https://gallery.svc.apps.okf.fured.clou
 
 ```bash
 oc create serviceaccount github-actions
-oc policy add-role-to-user edit system:serviceaccounts:lab2:github-actions
+oc create rolebinding github-actions-edit --clusterrole=edit --serviceaccount=lab2:github-actions -n lab2
 oc create token github-actions --duration=315576000s
 ```
 

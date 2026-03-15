@@ -25,6 +25,7 @@ function App() {
         <Routes>
           <Route path="/" element={<Layout />}>
             <Route index element={<Gallery />} />
+            <Route path="image/:id" element={<Gallery />} />
             <Route path="login" element={<Login />} />
             <Route path="register" element={<Register />} />
             <Route path="upload" element={

@@ -102,6 +102,14 @@ func handleRegister(c *gin.Context) {
 		return
 	}
 
+	if user.ID == 1 {
+		user.Admin = true
+		if err := db.DB.Save(&user).Error; err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "internal server error"})
+			return
+		}
+	}
+
 	token, err := common_api.GenerateJWT(&user)
 	if err != nil {
 		log.Printf("JWT generate error: %v", err)
@@ -128,6 +136,12 @@ func handleLogin(c *gin.Context) {
 
 	res := db.DB.Where(&db.User{UserName: login.Username}).First(&user)
 	if res.Error != nil {
+		if errors.Is(res.Error, gorm.ErrRecordNotFound) {
+			log.Printf("User not found.")
+			c.JSON(http.StatusUnauthorized, gin.H{"error": "invalid username or password"})
+			return
+		}
+
 		log.Printf("DB error: %v", res.Error)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "internal server error"})
 		return
