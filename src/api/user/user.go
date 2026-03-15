@@ -187,7 +187,7 @@ func handleMe(c *gin.Context) {
 
 	var user db.User
 
-	res := db.DB.Where(claims.ID).First(&user)
+	res := db.DB.Where(claims.UserID).First(&user)
 	if res.Error != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "internal server error"})
 		return
