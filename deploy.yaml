@@ -1,3 +1,25 @@
+apiVersion: v1
+kind: Secret
+metadata:
+  name: gallery-secrets
+  labels:
+    app.kubernetes.io/part-of: gallery-app
+type: Opaque
+stringData:
+  DB_HOST: "postgres"
+  DB_PORT: "5432"
+  DB_USER: "galleryuser"
+  DB_PASS: "gallerypass"
+  DB_NAME: "gallerydb"
+  POSTGRES_USER: "galleryuser"
+  POSTGRES_PASSWORD: "gallerypass"
+  POSTGRES_DB: "gallerydb"
+  STORAGE_URI: "seaweedfs:8333"
+  STORAGE_ACCESS_KEY: "some_access_key"
+  STORAGE_SECRET_KEY: "some_secret_key"
+  AWS_ACCESS_KEY_ID: "some_access_key"
+  AWS_SECRET_ACCESS_KEY: "some_secret_key"
+---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -20,23 +42,9 @@ spec:
           image: kisbogdan/gallery:latest
           ports:
             - containerPort: 8080
-          env:
-            - name: DB_HOST
-              value: "postgres"
-            - name: DB_PORT
-              value: "5432"
-            - name: DB_USER
-              value: "galleryuser"
-            - name: DB_PASS
-              value: "gallerypass"
-            - name: DB_NAME
-              value: "gallerydb"
-            - name: STORAGE_URI
-              value: "seaweedfs:8333"
-            - name: STORAGE_ACCESS_KEY
-              value: "some_access_key"
-            - name: STORAGE_SECRET_KEY
-              value: "some_secret_key"
+          envFrom:
+            - secretRef:
+                name: gallery-secrets
 ---
 apiVersion: v1
 kind: Service
@@ -105,13 +113,9 @@ spec:
           imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 5432
-          env:
-            - name: POSTGRES_USER
-              value: "galleryuser"
-            - name: POSTGRES_PASSWORD
-              value: "gallerypass"
-            - name: POSTGRES_DB
-              value: "gallerydb"
+          envFrom:
+            - secretRef:
+                name: gallery-secrets
           volumeMounts:
             - mountPath: /var/lib/postgresql
               name: postgresdata
@@ -196,11 +200,9 @@ spec:
           volumeMounts:
             - mountPath: /data
               name: seaweedfsdata
-          env:
-            - name: AWS_ACCESS_KEY_ID
-              value: "some_access_key"
-            - name: AWS_SECRET_ACCESS_KEY
-              value: "some_secret_key"
+          envFrom:
+            - secretRef:
+                name: gallery-secrets
       volumes:
         - name: seaweedfsdata
           persistentVolumeClaim:
