@@ -57,10 +57,10 @@ docker build -t kisbogdan/gallery:latest .
 docker push kisbogdan/gallery:latest
 ```
 
-Set the following secrets in GitHub Actions:
+Set the following secrets and variables in GitHub Actions:
 
-- `DOCKER_USERNAME`
-- `DOCKER_PASSWORD`
+- `DOCKER_USERNAME` (variable)
+- `DOCKER_PASSWORD` (secret)
 
 ### Kubernetes
 
@@ -120,11 +120,12 @@ oc create rolebinding github-actions-edit --clusterrole=edit --serviceaccount=la
 oc create token github-actions --duration=315576000s
 ```
 
-2. Set the following GitHub Actions secrets:
+2. Set the following GitHub Actions secrets and variables:
 
-- `OPENSHIFT_SERVER`: `https://api.okd.fured.cloud.bme.hu:6443`
-- `OPENSHIFT_TOKEN`: \<token\>
-- `OPENSHIFT_NAMESPACE`: \<your namespace\>
+- `OPENSHIFT_SERVER`: `https://api.okd.fured.cloud.bme.hu:6443` (variable)
+- `OPENSHIFT_TOKEN`: \<token\> (secret)
+- `OPENSHIFT_NAMESPACE`: \<your namespace\> (variable)
+- `OPENSHIFT_DEPLOYMENT`: \<deployment name, like gallery\> (variable)
 
 3. When pushed to master, the deployment is automatically rolled out.
 
