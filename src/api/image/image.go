@@ -11,6 +11,7 @@ import (
 	user_api "github.com/kisbogdan-kolos/gallery/api/user"
 	"github.com/kisbogdan-kolos/gallery/db"
 	"github.com/kisbogdan-kolos/gallery/storage"
+	"github.com/minio/minio-go/v7"
 )
 
 type ImageCreate struct {
@@ -182,6 +183,10 @@ func handleImageGet(c *gin.Context) {
 
 	reader, size, contentType, err := storage.Get(uuid)
 	if err != nil {
+		if minio.ToErrorResponse(err).Code == "NoSuchKey" {
+			c.JSON(http.StatusNotFound, gin.H{"error": "image not found"})
+			return
+		}
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "internal server error"})
 		return
 	}
