@@ -14,7 +14,7 @@ FROM golang:1.26 AS build-backend
 
 WORKDIR /app
 
-COPY ./src .
+COPY ./backend .
 RUN go mod download
 
 RUN CGO_ENABLED=0 GOOS=linux go build -o /gallery
