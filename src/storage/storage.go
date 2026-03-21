@@ -67,3 +67,9 @@ func Get(id uuid.UUID) (data io.Reader, length uint, contentType string, err err
 
 	return obj, uint(objinfo.Size), objinfo.ContentType, err
 }
+
+func Delete(id uuid.UUID) error {
+	err := client.RemoveObject(context.Background(), bucket, id.String(), minio.RemoveObjectOptions{})
+
+	return err
+}

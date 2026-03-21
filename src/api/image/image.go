@@ -122,6 +122,14 @@ func handleDelete(c *gin.Context) {
 		return
 	}
 
+	if image.ImageID != nil {
+		err := storage.Delete(*image.ImageID)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "internal server error"})
+			return
+		}
+	}
+
 	if err := db.DB.Delete(&image).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "internal server error"})
 		return
