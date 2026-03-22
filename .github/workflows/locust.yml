@@ -8,7 +8,7 @@ on:
       - 'v*'
     paths:
       - 'locust/**'
-      - '.github/workflows/**'
+      - '.github/workflows/locust.yml'
 
 jobs:
   build-and-push:
@@ -16,6 +16,8 @@ jobs:
     steps:
       - name: Check out the repository
         uses: actions/checkout@v4
+        with:
+          lfs: true
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3

@@ -9,7 +9,7 @@ on:
     paths:
       - 'backend/**'
       - 'frontend/**'
-      - '.github/workflows/**'
+      - '.github/workflows/build-push.yml'
 
 jobs:
   build-and-push:
