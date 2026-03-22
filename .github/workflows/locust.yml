@@ -36,7 +36,7 @@ jobs:
         uses: docker/build-push-action@v5
         with:
           context: ./locust
-          file: ./Dockerfile
+          file: ./locust/Dockerfile
           push: true
           tags: |
             ${{ steps.meta.outputs.tags }}
