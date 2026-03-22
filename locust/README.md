@@ -46,3 +46,81 @@ Or, if running OpenShift
 oc apply -f locust.yaml
 oc port-forward services/locust 8089:8089
 ```
+
+## Load testing
+
+### Autoscaling
+
+The following parts were added to the `deploy.yaml` for autoscaling:
+
+A CPU limit and request for the `gallery` deployment
+
+```yaml
+          resources:
+            limits:
+              cpu: 1000m
+            requests:
+              cpu: 500m
+```
+
+An autoscaler
+
+```yaml
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: gallery-autoscaler
+  namespace: lab2
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: gallery
+  minReplicas: 1
+  maxReplicas: 5
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          averageUtilization: 80
+          type: Utilization
+```
+
+### Load generation
+
+I started the Locust deployment and started generating load with 50 users with a ramp up of 0.5. There is no service defined for Locust, so I used the port forward function in the command line tool:
+
+```bash
+oc port-forward deployments/locust 8089:8089
+```
+
+![alt text](doc/locust0.png)
+
+Before starting the test, the autoscaler reported a CPU use of 0%.
+
+![alt text](doc/hpa0.png)
+
+About a minute in, the load increased and the desired pod count also grew to 2.
+
+![alt text](doc/hpa1.png)
+
+The load levelled of after about 3 minutes (when all the "users" were active), and 3 pods were enough.
+
+![alt text](doc/hpa2.png)
+
+At this point, I updated the user count to 100. The CPU usage did not go up
+
+![alt text](doc/locust1.png)
+
+![alt text](doc/locust2.png)
+
+The lots of failed uploads were suspicious, because none of my local tests showed these kinds of results. After a little bit of investigation, I found that the PersistentVolumeClaim of the SeaweedFS filled up, and it was unable to accept any more images.
+
+![alt text](image-6.png)
+
+The other errors contained 104 cases of the image not being found and 1 network error. The 404 error is a result of a race condition, where a user starts downloading some images, while an other user deletes the image which is being loaded. This is expected with this kind of load.
+
+All in all, the autoscaling seems to work well, and after some time, it nicely scaled back to 1 pod.
+
+![alt text](doc/hpa3.png)

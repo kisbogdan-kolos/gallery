@@ -60,6 +60,11 @@ spec:
           envFrom:
             - secretRef:
                 name: gallery-secrets
+          resources:
+            limits:
+              cpu: 1000m
+            requests:
+              cpu: 500m
 ---
 apiVersion: v1
 kind: Service
@@ -74,6 +79,26 @@ spec:
   ports:
     - port: 8080
       targetPort: 8080
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: gallery-autoscaler
+  namespace: lab2
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: gallery
+  minReplicas: 1
+  maxReplicas: 5
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          averageUtilization: 80
+          type: Utilization
 ---
 apiVersion: v1
 kind: PersistentVolume
