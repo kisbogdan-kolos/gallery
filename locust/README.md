@@ -117,7 +117,7 @@ At this point, I updated the user count to 100. The CPU usage did not go up
 
 The lots of failed uploads were suspicious, because none of my local tests showed these kinds of results. After a little bit of investigation, I found that the PersistentVolumeClaim of the SeaweedFS filled up, and it was unable to accept any more images.
 
-![alt text](image-6.png)
+![alt text](doc/pvc1.png)
 
 The other errors contained 104 cases of the image not being found and 1 network error. The 404 error is a result of a race condition, where a user starts downloading some images, while an other user deletes the image which is being loaded. This is expected with this kind of load.
 
