@@ -124,3 +124,17 @@ The other errors contained 104 cases of the image not being found and 1 network 
 All in all, the autoscaling seems to work well, and after some time, it nicely scaled back to 1 pod.
 
 ![alt text](doc/hpa3.png)
+
+I repeated the test with more storage, and with less time to avoid filling up the storage so fast. As expected, the autoscaling worked well, and scaled to 3 pods.
+
+![alt text](doc/hpa4.png)
+
+![alt text](doc/pods0.png)
+
+The results in Locust were also a lot better, only 2 upload failures (most likely due to SeaweedFS being overloaded), a couple of 404 errors on image get, and a registration/login failure. This most likely was due to a freshly started pod not being able to handle connections, but some traffic was routed there.
+
+![alt text](doc/locust3.png)
+
+![alt text](doc/locust4.png)
+
+![alt text](doc/locust5.png)
