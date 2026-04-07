@@ -76,6 +76,8 @@ class GalleryUser(HttpUser):
             image_data = create_resp.json()
             image_id = image_data.get("id")
 
+            self.my_images.append(image_id)
+
             if image_id:
                 # 2. Upload actual image data from 'image' directory
                 upload_headers = self.headers.copy()
@@ -100,9 +102,7 @@ class GalleryUser(HttpUser):
                     name="/api/image/[id]/upload"
                 )
 
-                if upload_resp.status_code == 200:
-                    self.my_images.append(image_id)
-                    
+                if upload_resp.status_code == 200:                    
                     # 3. View the uploaded image through storage API
                     storage_uuid = upload_resp.json().get("image")
                     if storage_uuid:
