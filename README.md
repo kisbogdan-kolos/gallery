@@ -92,7 +92,7 @@ apiVersion: route.openshift.io/v1
 kind: Route
 metadata:
   name: gallery-svc
-  namespace: lab2
+  namespace: <namespace>
 spec:
   to:
     name: gallery
@@ -108,26 +108,31 @@ spec:
   alternateBackends: []
 ```
 
-Now, your app should be accessible from _https://gallery.svc.apps.okf.fured.cloud.bme.hu/_.
+Now, your app should be accessible from _https://gallery-svc-test.apps.okd.fured.cloud.bme.hu/_.
 
 #### Auto-deploy
 
-1. Create a service account in OpenShift
+1. Create a project in OpenShift, this will be your namespace.
+
+2. Create a service account in OpenShift
 
 ```bash
 oc create serviceaccount github-actions
-oc create rolebinding github-actions-edit --clusterrole=edit --serviceaccount=lab2:github-actions -n lab2
+oc create rolebinding github-actions-edit --clusterrole=edit --serviceaccount=<namespace>:github-actions -n <namespace>
 oc create token github-actions --duration=315576000s
 ```
 
-2. Set the following GitHub Actions secrets and variables:
+3. Set the following GitHub Actions secrets and variables:
 
 - `OPENSHIFT_SERVER`: `https://api.okd.fured.cloud.bme.hu:6443` (variable)
 - `OPENSHIFT_TOKEN`: \<token\> (secret)
 - `OPENSHIFT_NAMESPACE`: \<your namespace\> (variable)
-- `OPENSHIFT_DEPLOYMENT`: \<deployment name, like gallery\> (variable)
+- `APP_POSTGRES_PASS`: \<random generated secret\> (secret)
+- `APP_SEAWEED_ACCESS_KEY`: \<random generated secret\> (secret)
+- `APP_SEAWEED_SECRET_KEY`: \<random generated secret\> (secret)
+- `APP_JWT_SECRET`: \<random generated secret\> (secret)
 
-3. When pushed to master, the deployment is automatically rolled out.
+4. When pushed to master, the deployment is automatically rolled out.
 
 ### API
 
