@@ -1,0 +1,17 @@
+apiVersion: route.openshift.io/v1
+kind: Route
+metadata:
+  name: gallery-svc
+spec:
+  to:
+    name: gallery
+    weight: 100
+    kind: Service
+  host: ""
+  path: ""
+  tls:
+    insecureEdgeTerminationPolicy: ""
+    termination: edge
+  port:
+    targetPort: 8080
+  alternateBackends: []

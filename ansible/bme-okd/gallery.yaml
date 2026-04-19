@@ -1,0 +1,63 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: gallery
+  labels:
+    app: gallery
+    app.kubernetes.io/part-of: gallery-app
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: gallery
+  template:
+    metadata:
+      labels:
+        app: gallery
+    spec:
+      initContainers:
+        - name: wait-for-postgres
+          image: busybox:1.36
+          command:
+            [
+              "sh",
+              "-c",
+              "until nc -z postgres 5432; do echo \"waiting for postgres...\";
+                sleep 2; done;",
+            ]
+        - name: wait-for-seaweedfs
+          image: busybox:1.36
+          command:
+            [
+              "sh",
+              "-c",
+              "until nc -z seaweedfs 8333; do echo \"waiting for
+                seaweedfs...\"; sleep 2; done;",
+            ]
+      containers:
+        - name: gallery
+          image: kisbogdan/gallery:latest
+          ports:
+            - containerPort: 8080
+          envFrom:
+            - secretRef:
+                name: gallery-secrets
+          resources:
+            limits:
+              cpu: 1000m
+            requests:
+              cpu: 500m
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: gallery
+  labels:
+    app: gallery
+    app.kubernetes.io/part-of: gallery-app
+spec:
+  selector:
+    app: gallery
+  ports:
+    - port: 8080
+      targetPort: 8080

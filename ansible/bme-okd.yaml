@@ -1,0 +1,42 @@
+---
+- name: Deploy gallery app to BME OKD.
+  hosts: localhost
+  vars:
+    openshift_namespace: "{{ lookup('env', 'OPENSHIFT_NAMESPACE') }}"
+    app_postgres_pass: "{{ lookup('env', 'APP_POSTGRES_PASS') }}"
+    app_seaweed_access_key: "{{ lookup('env', 'APP_SEAWEED_ACCESS_KEY') }}"
+    app_seaweed_secret_key: "{{ lookup('env', 'APP_SEAWEED_SECRET_KEY') }}"
+    app_jwt_secret: "{{ lookup('env', 'APP_JWT_SECRET') }}"
+
+  tasks:
+    - name: Deploy secrets
+      kubernetes.core.k8s:
+        state: present
+        namespace: "{{ openshift_namespace }}"
+        definition: "{{ lookup('template', '{{ playbook_dir }}/bme-okd/secrets.yaml.j2')
+          | from_yaml }}"
+    - name: Deploy Postgres
+      kubernetes.core.k8s:
+        state: present
+        namespace: "{{ openshift_namespace }}"
+        src: "{{ playbook_dir }}/bme-okd/postgres.yaml"
+    - name: Deploy SeaweedFS
+      kubernetes.core.k8s:
+        state: present
+        namespace: "{{ openshift_namespace }}"
+        src: "{{ playbook_dir }}/bme-okd/seaweedfs.yaml"
+    - name: Deploy app
+      kubernetes.core.k8s:
+        state: present
+        namespace: "{{ openshift_namespace }}"
+        src: "{{ playbook_dir }}/bme-okd/gallery.yaml"
+    - name: Deploy app autoscaler
+      kubernetes.core.k8s:
+        state: present
+        namespace: "{{ openshift_namespace }}"
+        src: "{{ playbook_dir }}/bme-okd/gallery-autoscaler.yaml"
+    - name: Deploy app router
+      kubernetes.core.k8s:
+        state: present
+        namespace: "{{ openshift_namespace }}"
+        src: "{{ playbook_dir }}/bme-okd/gallery-router.yaml"

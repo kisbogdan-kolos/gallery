@@ -5,11 +5,11 @@ on:
     branches:
       - master
     tags:
-      - 'v*'
+      - "v*"
     paths:
-      - 'backend/**'
-      - 'frontend/**'
-      - '.github/workflows/build-push.yml'
+      - "backend/**"
+      - "frontend/**"
+      - ".github/workflows/build-push.yml"
 
 jobs:
   build-and-push:
@@ -61,5 +61,14 @@ jobs:
           insecure_skip_tls_verify: true
           namespace: ${{ vars.OPENSHIFT_NAMESPACE }}
 
-      - name: Trigger OpenShift Rollout
-        run: oc rollout restart deployment/${{ vars.OPENSHIFT_DEPLOYMENT }}
+      - name: Install Ansible and k8s module
+        run: pip install ansible kubernetes
+
+      - name: Deploy using Ansible
+        env:
+          OPENSHIFT_NAMESPACE: ${{ vars.OPENSHIFT_NAMESPACE }}
+          APP_POSTGRES_PASS: ${{ secrets.APP_POSTGRES_PASS }}
+          APP_SEAWEED_ACCESS_KEY: ${{ secrets.APP_SEAWEED_ACCESS_KEY }}
+          APP_SEAWEED_SECRET_KEY: ${{ secrets.APP_SEAWEED_SECRET_KEY }}
+          APP_JWT_SECRET: ${{ secrets.APP_JWT_SECRET }}
+        run: ansible-playbook ansible/bme-okd.yaml
