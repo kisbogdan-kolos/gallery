@@ -2,9 +2,9 @@ package api
 
 import (
 	"github.com/gin-gonic/gin"
-	common_api "github.com/kisbogdan-kolos/gallery/api/common"
-	image_api "github.com/kisbogdan-kolos/gallery/api/image"
-	user_api "github.com/kisbogdan-kolos/gallery/api/user"
+	common_api "github.com/kisbogdan-kolos/gallery/backend/api/common"
+	image_api "github.com/kisbogdan-kolos/gallery/backend/api/image"
+	user_api "github.com/kisbogdan-kolos/gallery/backend/api/user"
 )
 
 func Register(router *gin.RouterGroup) {

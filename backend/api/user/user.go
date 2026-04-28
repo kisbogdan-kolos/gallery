@@ -9,8 +9,8 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/go-crypt/crypt"
 	"github.com/go-crypt/crypt/algorithm/argon2"
-	common_api "github.com/kisbogdan-kolos/gallery/api/common"
-	"github.com/kisbogdan-kolos/gallery/db"
+	common_api "github.com/kisbogdan-kolos/gallery/backend/api/common"
+	"github.com/kisbogdan-kolos/gallery/backend/db"
 	"gorm.io/gorm"
 )
 

@@ -9,8 +9,8 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v4"
-	"github.com/kisbogdan-kolos/gallery/db"
-	"github.com/kisbogdan-kolos/gallery/helper"
+	"github.com/kisbogdan-kolos/gallery/backend/db"
+	"github.com/kisbogdan-kolos/gallery/backend/helper"
 )
 
 type JWTClaims struct {

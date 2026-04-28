@@ -14,7 +14,7 @@ on:
       - "ansible/bme-okd/**"
 
 jobs:
-  build-and-push:
+  build-gallery:
     runs-on: ubuntu-latest
     steps:
       - name: Check out the repository
@@ -46,8 +46,40 @@ jobs:
             kisbogdan/gallery:latest
           labels: ${{ steps.meta.outputs.labels }}
 
+  build-gallery-ocr:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out the repository
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ vars.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      - name: Extract metadata (tags, labels) for Docker
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: kisbogdan/gallery-ocr
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./Dockerfile-ocr
+          push: true
+          tags: |
+            ${{ steps.meta.outputs.tags }}
+            kisbogdan/gallery-ocr:latest
+          labels: ${{ steps.meta.outputs.labels }}
+
   deploy-openshift:
-    needs: build-and-push
+    needs: [ gallery, build-gallery-ocr ]
     runs-on: ubuntu-latest
     steps:
       - name: Check out the repository
@@ -76,4 +108,5 @@ jobs:
           APP_SEAWEED_ACCESS_KEY: ${{ secrets.APP_SEAWEED_ACCESS_KEY }}
           APP_SEAWEED_SECRET_KEY: ${{ secrets.APP_SEAWEED_SECRET_KEY }}
           APP_JWT_SECRET: ${{ secrets.APP_JWT_SECRET }}
+          APP_RABBITMQ_PASS: ${{ secrets.APP_RABBITMQ_PASS }}
         run: ansible-playbook ansible/bme-okd.yaml

@@ -2,9 +2,10 @@ package db
 
 import (
 	"fmt"
+	"time"
 
 	"github.com/google/uuid"
-	"github.com/kisbogdan-kolos/gallery/helper"
+	"github.com/kisbogdan-kolos/gallery/backend/helper"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 )
@@ -33,6 +34,21 @@ type Image struct {
 
 	CreatedBy uint `gorm:"not null"`
 	User      User `gorm:"foreignKey:CreatedBy"`
+
+	OCRTexts []ImageText `gorm:"foreignKey:ImageID"`
+	OCRTime  *time.Time
+}
+
+type ImageText struct {
+	gorm.Model
+
+	Text string `gorm:"not null"`
+	XMin int
+	YMin int
+	XMax int
+	YMax int
+
+	ImageID uint `gorm:"not null"`
 }
 
 func DbConnect() error {
@@ -51,7 +67,7 @@ func DbConnect() error {
 
 	DB = db
 
-	models := []any{&User{}, &Image{}}
+	models := []any{&User{}, &Image{}, &ImageText{}}
 
 	for _, model := range models {
 		err = DB.AutoMigrate(model)

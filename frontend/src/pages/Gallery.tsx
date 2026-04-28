@@ -2,7 +2,15 @@ import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { fetchWithAuth } from '../api';
 import { useAuth } from '../AuthContext';
-import { Trash2, X, ExternalLink } from 'lucide-react';
+import { Trash2, X, ExternalLink, ScanText } from 'lucide-react';
+
+interface TextRecord {
+  text: string;
+  xmin: number;
+  ymin: number;
+  xmax: number;
+  ymax: number;
+}
 
 interface ImageRecord {
   id: number;
@@ -15,16 +23,23 @@ interface ImageRecord {
     admin: boolean;
   };
   image: string | null;
+  text?: TextRecord[];
+  ocrtime: string | null;
 }
 
 export default function Gallery() {
   const [images, setImages] = useState<ImageRecord[]>([]);
   const [error, setError] = useState('');
+  const [imageDimensions, setImageDimensions] = useState<{width: number, height: number} | null>(null);
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { user } = useAuth();
 
   const selectedImage = images.find((img) => img.id.toString() === id) || null;
+
+  useEffect(() => {
+    setImageDimensions(null);
+  }, [selectedImage]);
 
   const closeImage = () => {
     navigate('/');
@@ -61,6 +76,21 @@ export default function Gallery() {
       } else {
         const d = await res.json();
         alert(d.error || 'Failed to delete');
+      }
+    } catch (e) {
+      alert('Network error');
+    }
+  };
+
+  const handleOcr = async (id: number) => {
+    if (!confirm('Are you sure you want to run OCR on this image?')) return;
+    try {
+      const res = await fetchWithAuth(`/api/image/${id}/ocr`, { method: 'POST' });
+      if (res.ok) {
+        loadImages();
+      } else {
+        const d = await res.json();
+        alert(d.error || 'Failed to start OCR');
       }
     } catch (e) {
       alert('Network error');
@@ -113,13 +143,22 @@ export default function Gallery() {
                   </a>
                 )}
                 {(user?.admin || user?.id === img.uploader.id) && (
-                  <button
-                    onClick={() => handleDelete(img.id)}
-                    className="text-red-600 hover:text-red-900 p-1 ml-auto"
-                    title="Delete image"
-                  >
-                    <Trash2 className="w-5 h-5" />
-                  </button>
+                  <div className="ml-auto flex items-center space-x-1">
+                    <button
+                      onClick={() => handleOcr(img.id)}
+                      className="text-blue-600 hover:text-blue-900 p-1"
+                      title="Run OCR"
+                    >
+                      <ScanText className="w-5 h-5" />
+                    </button>
+                    <button
+                      onClick={() => handleDelete(img.id)}
+                      className="text-red-600 hover:text-red-900 p-1"
+                      title="Delete image"
+                    >
+                      <Trash2 className="w-5 h-5" />
+                    </button>
+                  </div>
                 )}
               </div>
             </div>
@@ -144,16 +183,61 @@ export default function Gallery() {
             <X className="w-8 h-8" />
           </button>
           <div className="flex flex-col items-center max-w-full max-h-full">
-            <img
-              src={`/api/storage/${selectedImage.image}`}
-              alt={selectedImage.name}
-              className="max-h-[85vh] max-w-full object-contain rounded"
-              onClick={(e) => e.stopPropagation()}
-            />
+            <div className="relative inline-block max-h-[85vh] max-w-full">
+              <img
+                src={`/api/storage/${selectedImage.image}`}
+                alt={selectedImage.name}
+                className="max-h-[85vh] max-w-full block rounded"
+                onClick={(e) => e.stopPropagation()}
+                onLoad={(e) => {
+                  setImageDimensions({
+                    width: e.currentTarget.naturalWidth,
+                    height: e.currentTarget.naturalHeight
+                  });
+                }}
+              />
+              {imageDimensions && selectedImage.text && selectedImage.text.length > 0 && (
+                <svg
+                  className="absolute inset-0 w-full h-full"
+                  viewBox={`0 0 ${imageDimensions.width} ${imageDimensions.height}`}
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  {selectedImage.text.map((t, i) => (
+                    <g key={i}>
+                      <rect
+                        x={t.xmin}
+                        y={t.ymin}
+                        width={t.xmax - t.xmin}
+                        height={t.ymax - t.ymin}
+                        fill="rgba(0,0,0,0.2)"
+                        stroke="rgb(239, 68, 68)"
+                        strokeWidth="2"
+                      />
+                      <text
+                        x={t.xmin + (t.xmax - t.xmin) / 2}
+                        y={t.ymin + (t.ymax - t.ymin) / 2}
+                        fill="rgba(255,255,255,0.8)"
+                        fontSize={(t.ymax - t.ymin) * 0.8}
+                        dominantBaseline="central"
+                        textAnchor="middle"
+                        textLength={t.xmax - t.xmin}
+                        lengthAdjust="spacingAndGlyphs"
+                        className="select-text cursor-text"
+                      >
+                        {t.text}
+                      </text>
+                    </g>
+                  ))}
+                </svg>
+              )}
+            </div>
             <div className="text-white mt-4 text-center">
               <p className="text-xl font-medium">{selectedImage.name}</p>
               <p className="text-sm mt-1 text-gray-300">
                 Uploaded by {selectedImage.uploader.displayname} at {new Date(selectedImage.uploaded).toLocaleString()}
+              </p>
+              <p className="text-xs mt-1 text-gray-400">
+                OCR finished at {selectedImage.ocrtime ? new Date(selectedImage.ocrtime).toLocaleString() : 'OCR not run yet'}
               </p>
               <a
                 href={`/api/storage/${selectedImage.image}`}

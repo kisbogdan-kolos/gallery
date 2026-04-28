@@ -7,6 +7,7 @@
     app_seaweed_access_key: "{{ lookup('env', 'APP_SEAWEED_ACCESS_KEY') }}"
     app_seaweed_secret_key: "{{ lookup('env', 'APP_SEAWEED_SECRET_KEY') }}"
     app_jwt_secret: "{{ lookup('env', 'APP_JWT_SECRET') }}"
+    app_rabbitmq_pass: "{{ lookup('env', 'APP_RABBITMQ_PASS') }}"
 
   tasks:
     - name: Deploy secrets
@@ -25,11 +26,21 @@
         state: present
         namespace: "{{ openshift_namespace }}"
         src: "{{ playbook_dir }}/bme-okd/seaweedfs.yaml"
+    - name: Deploy RabbitMQ
+      kubernetes.core.k8s:
+        state: present
+        namespace: "{{ openshift_namespace }}"
+        src: "{{ playbook_dir }}/bme-okd/rabbitmq.yaml"
     - name: Deploy app
       kubernetes.core.k8s:
         state: present
         namespace: "{{ openshift_namespace }}"
         src: "{{ playbook_dir }}/bme-okd/gallery.yaml"
+    - name: Deploy OCR worker
+      kubernetes.core.k8s:
+        state: present
+        namespace: "{{ openshift_namespace }}"
+        src: "{{ playbook_dir }}/bme-okd/gallery-ocr.yaml"
     - name: Deploy app autoscaler
       kubernetes.core.k8s:
         state: present

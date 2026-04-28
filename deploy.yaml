@@ -27,6 +27,12 @@ stringData:
 
   AWS_ACCESS_KEY_ID: "some_access_key"
   AWS_SECRET_ACCESS_KEY: "some_secret_key"
+
+  RABBITMQ_USER: "rabbit"
+  RABBITMQ_PASS: "rabbit"
+  RABBITMQ_HOST: "rabbitmq"
+  RABBITMQ_PORT: "5672"
+  RABBITMQ_QUEUE: "image"
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -52,6 +58,9 @@ spec:
         - name: wait-for-seaweedfs
           image: busybox:1.36
           command: ['sh', '-c', 'until nc -z seaweedfs 8333; do echo "waiting for seaweedfs..."; sleep 2; done;']
+        - name: wait-for-rabbitmq
+          image: busybox:1.36
+          command: ['sh', '-c', 'until nc -z rabbitmq 5672; do echo "waiting for rabbitmq..."; sleep 2; done;']
       containers:
         - name: gallery
           image: kisbogdan/gallery:latest
@@ -84,7 +93,6 @@ apiVersion: autoscaling/v2
 kind: HorizontalPodAutoscaler
 metadata:
   name: gallery-autoscaler
-  namespace: lab2
 spec:
   scaleTargetRef:
     apiVersion: apps/v1
@@ -99,6 +107,40 @@ spec:
         target:
           averageUtilization: 80
           type: Utilization
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: gallery-ocr
+  labels:
+    app: gallery-ocr
+    app.kubernetes.io/part-of: gallery-app
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: gallery-ocr
+  template:
+    metadata:
+      labels:
+        app: gallery-ocr
+    spec:
+      initContainers:
+        - name: wait-for-postgres
+          image: busybox:1.36
+          command: ['sh', '-c', 'until nc -z postgres 5432; do echo "waiting for postgres..."; sleep 2; done;']
+        - name: wait-for-seaweedfs
+          image: busybox:1.36
+          command: ['sh', '-c', 'until nc -z seaweedfs 8333; do echo "waiting for seaweedfs..."; sleep 2; done;']
+        - name: wait-for-rabbitmq
+          image: busybox:1.36
+          command: ['sh', '-c', 'until nc -z rabbitmq 5672; do echo "waiting for rabbitmq..."; sleep 2; done;']
+      containers:
+        - name: gallery-ocr
+          image: kisbogdan/gallery-ocr:latest
+          envFrom:
+            - secretRef:
+                name: gallery-secrets
 ---
 apiVersion: v1
 kind: PersistentVolume
@@ -268,3 +310,56 @@ spec:
     - name: s3
       port: 8333
       targetPort: 8333
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: rabbitmq
+  labels:
+    app: rabbitmq
+    app.kubernetes.io/part-of: gallery-app
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: rabbitmq
+  template:
+    metadata:
+      labels:
+        app: rabbitmq
+    spec:
+      containers:
+        - name: rabbitmq
+          image: rabbitmq:3-management
+          ports:
+            - containerPort: 5672
+            - containerPort: 15672
+          env:
+            - name: RABBITMQ_DEFAULT_USER
+              valueFrom:
+                secretKeyRef:
+                  name: gallery-secrets
+                  key: RABBITMQ_USER
+            - name: RABBITMQ_DEFAULT_PASS
+              valueFrom:
+                secretKeyRef:
+                  name: gallery-secrets
+                  key: RABBITMQ_PASS
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: rabbitmq
+  labels:
+    app: rabbitmq
+    app.kubernetes.io/part-of: gallery-app
+spec:
+  selector:
+    app: rabbitmq
+  ports:
+    - name: amqp
+      port: 5672
+      targetPort: 5672
+    - name: management
+      port: 15672
+      targetPort: 15672

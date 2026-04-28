@@ -259,7 +259,8 @@ Reply:
     "registered": "2026-02-26T17:30:24.696482+01:00",
     "admin": true
   },
-  "image": null
+  "image": null,
+  "text": []
 }
 ```
 
@@ -283,13 +284,41 @@ Reply:
     "registered": "2026-02-26T17:30:24.696482+01:00",
     "admin": true
   },
-  "image": "00a2a3f4-f2db-4385-a651-166c0b91d6d0"
+  "image": "00a2a3f4-f2db-4385-a651-166c0b91d6d0",
+  "text": []
+}
+```
+
+#### POST `/api/image/:id/ocr`
+
+Request OCR coverage for the image again. This can be useful if the OCR subsystem failed for some reason.
+
+Request body: nothing
+
+Reply:
+
+```json
+{
+  "id": 13,
+  "name": "Szép kép 4",
+  "uploaded": "2026-03-15T11:29:52.304718+01:00",
+  "uploader": {
+    "username": "admin",
+    "id": 1,
+    "displayname": "Admin",
+    "registered": "2026-02-26T17:30:24.696482+01:00",
+    "admin": true
+  },
+  "image": "00a2a3f4-f2db-4385-a651-166c0b91d6d0",
+  "text": []
 }
 ```
 
 #### GET `/api/image`
 
 Returns all the images in the system.
+
+The `text` field contains OCR results with coordinates that mark the position on the image in pixels.
 
 Reply:
 
@@ -306,7 +335,11 @@ Reply:
       "registered": "2026-02-26T17:30:24.696482+01:00",
       "admin": true
     },
-    "image": "b692592a-dd91-4a11-ac88-c81d06cead65"
+    "image": "b692592a-dd91-4a11-ac88-c81d06cead65",
+    "text":[
+      {"text":"L] Anonymous 03/02/12(Fri)17:39 No.1921453","xmin":88,"ymin":627,"xmax":632,"ymax":657},
+      {"text":"If only you knew how bad things really are.","xmin":157,"ymin":690,"xmax":610,"ymax":713}
+    ]
   },
   {
     "id": 3,
@@ -319,7 +352,11 @@ Reply:
       "registered": "2026-02-26T17:30:24.696482+01:00",
       "admin": true
     },
-    "image": "a4542c99-3697-435f-a6c3-7228c1f7492f"
+    "image": "a4542c99-3697-435f-a6c3-7228c1f7492f",
+    "text":[
+      {"text":"L] Anonymous 03/02/12(Fri)17:39 No.1921453","xmin":88,"ymin":627,"xmax":632,"ymax":657},
+      {"text":"If only you knew how bad things really are.","xmin":157,"ymin":690,"xmax":610,"ymax":713}
+    ]
   }
 ]
 ```

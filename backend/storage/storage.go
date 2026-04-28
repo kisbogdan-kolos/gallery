@@ -6,7 +6,7 @@ import (
 	"log"
 
 	"github.com/google/uuid"
-	"github.com/kisbogdan-kolos/gallery/helper"
+	"github.com/kisbogdan-kolos/gallery/backend/helper"
 	"github.com/minio/minio-go/v7"
 	"github.com/minio/minio-go/v7/pkg/credentials"
 )

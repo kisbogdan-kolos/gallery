@@ -5,10 +5,11 @@ import (
 	"strings"
 
 	"github.com/gin-gonic/gin"
-	"github.com/kisbogdan-kolos/gallery/api"
-	"github.com/kisbogdan-kolos/gallery/db"
-	"github.com/kisbogdan-kolos/gallery/helper"
-	"github.com/kisbogdan-kolos/gallery/storage"
+	"github.com/kisbogdan-kolos/gallery/backend/api"
+	"github.com/kisbogdan-kolos/gallery/backend/db"
+	"github.com/kisbogdan-kolos/gallery/backend/helper"
+	"github.com/kisbogdan-kolos/gallery/backend/queue"
+	"github.com/kisbogdan-kolos/gallery/backend/storage"
 )
 
 func main() {
@@ -18,6 +19,12 @@ func main() {
 	}
 
 	err = storage.Init()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	err = queue.Connect()
+	defer queue.Disconnect()
 	if err != nil {
 		log.Fatal(err)
 	}
