@@ -79,7 +79,7 @@ jobs:
           labels: ${{ steps.meta.outputs.labels }}
 
   deploy-openshift:
-    needs: [ gallery, build-gallery-ocr ]
+    needs: [ build-gallery, build-gallery-ocr ]
     runs-on: ubuntu-latest
     steps:
       - name: Check out the repository
