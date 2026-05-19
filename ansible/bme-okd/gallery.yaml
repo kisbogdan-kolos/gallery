@@ -46,6 +46,7 @@ spec:
       containers:
         - name: gallery
           image: kisbogdan/gallery:latest
+          imagePullPolicy: Always
           ports:
             - containerPort: 8080
           envFrom:

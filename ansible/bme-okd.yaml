@@ -36,11 +36,37 @@
         state: present
         namespace: "{{ openshift_namespace }}"
         src: "{{ playbook_dir }}/bme-okd/gallery.yaml"
+    - name: Restart app deployment
+      kubernetes.core.k8s:
+        state: patched
+        namespace: "{{ openshift_namespace }}"
+        api_version: apps/v1
+        kind: Deployment
+        name: gallery
+        definition:
+          spec:
+            template:
+              metadata:
+                annotations:
+                  kubectl.kubernetes.io/restartedAt: "{{ lookup('pipe', 'date -Iseconds') }}"
     - name: Deploy OCR worker
       kubernetes.core.k8s:
         state: present
         namespace: "{{ openshift_namespace }}"
         src: "{{ playbook_dir }}/bme-okd/gallery-ocr.yaml"
+    - name: Restart OCR deployment
+      kubernetes.core.k8s:
+        state: patched
+        namespace: "{{ openshift_namespace }}"
+        api_version: apps/v1
+        kind: Deployment
+        name: gallery-ocr
+        definition:
+          spec:
+            template:
+              metadata:
+                annotations:
+                  kubectl.kubernetes.io/restartedAt: "{{ lookup('pipe', 'date -Iseconds') }}"
     - name: Deploy app autoscaler
       kubernetes.core.k8s:
         state: present

@@ -46,6 +46,7 @@ spec:
       containers:
         - name: gallery-ocr
           image: kisbogdan/gallery-ocr:latest
+          imagePullPolicy: Always
           envFrom:
             - secretRef:
                 name: gallery-secrets
