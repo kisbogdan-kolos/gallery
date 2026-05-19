@@ -7,6 +7,7 @@ import Gallery from './pages/Gallery';
 import Login from './pages/Login';
 import Register from './pages/Register';
 import Upload from './pages/Upload';
+import User from './pages/User';
 
 // A simple component to conditionally render based on auth state
 function RequireAuth({ children }: { children: ReactNode }) {
@@ -31,6 +32,11 @@ function App() {
             <Route path="upload" element={
               <RequireAuth>
                 <Upload />
+              </RequireAuth>
+            } />
+            <Route path="user" element={
+              <RequireAuth>
+                <User />
               </RequireAuth>
             } />
           </Route>

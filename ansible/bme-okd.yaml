@@ -8,6 +8,10 @@
     app_seaweed_secret_key: "{{ lookup('env', 'APP_SEAWEED_SECRET_KEY') }}"
     app_jwt_secret: "{{ lookup('env', 'APP_JWT_SECRET') }}"
     app_rabbitmq_pass: "{{ lookup('env', 'APP_RABBITMQ_PASS') }}"
+    app_smtp_server: "{{ lookup('env', 'APP_SMTP_SERVER') }}"
+    app_smtp_mail_from: "{{ lookup('env', 'APP_SMTP_MAIL_FROM') }}"
+    app_smtp_user: "{{ lookup('env', 'APP_SMTP_USER') }}"
+    app_smtp_pass: "{{ lookup('env', 'APP_SMTP_PASS') }}"
 
   tasks:
     - name: Deploy secrets

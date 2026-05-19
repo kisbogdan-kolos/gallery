@@ -26,12 +26,20 @@ type UserRegister struct {
 	UserLogin
 
 	DisplayName string `json:"displayname"`
+	Email       string `json:"email"`
+}
+
+type UserModify struct {
+	Password    *string `json:"password"`
+	DisplayName *string `json:"displayname"`
+	Email       *string `json:"email"`
 }
 
 type UserReturn struct {
 	Username     string    `json:"username"`
 	ID           uint      `json:"id"`
 	DisplayName  string    `json:"displayname"`
+	Email        string    `json:"email"`
 	RegisterDate time.Time `json:"registered"`
 	Admin        bool      `json:"admin"`
 }
@@ -46,6 +54,7 @@ func User2Return(user *db.User) *UserReturn {
 	return &UserReturn{
 		Username:     user.UserName,
 		DisplayName:  user.DisplayName,
+		Email:        user.Email,
 		RegisterDate: user.CreatedAt,
 		Admin:        user.Admin,
 		ID:           user.ID,
@@ -67,6 +76,7 @@ func Register(router *gin.RouterGroup) {
 
 	router.POST("/register", handleRegister)
 	router.POST("/login", handleLogin)
+	router.PATCH("/me", handleModify)
 	router.GET("/me", handleMe)
 	router.GET("/all", handleAll)
 }
@@ -89,6 +99,7 @@ func handleRegister(c *gin.Context) {
 	user := db.User{
 		UserName:    register.Username,
 		DisplayName: register.DisplayName,
+		Email:       register.Email,
 		Password:    digest.String(),
 	}
 
@@ -179,6 +190,54 @@ func handleLogin(c *gin.Context) {
 	})
 }
 
+func handleModify(c *gin.Context) {
+	var modify UserModify
+
+	err := c.ShouldBindBodyWithJSON(&modify)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	ok, claims := common_api.ValidateJWT(c)
+	if !ok {
+		return
+	}
+
+	var user db.User
+
+	res := db.DB.Where(claims.UserID).First(&user)
+	if res.Error != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "internal server error"})
+		return
+	}
+
+	if modify.DisplayName != nil {
+		user.DisplayName = *modify.DisplayName
+	}
+
+	if modify.Email != nil {
+		user.Email = *modify.Email
+	}
+
+	if modify.Password != nil {
+		digest, err := hasher.Hash(*modify.Password)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "internal server error"})
+			return
+		}
+
+		user.Password = digest.String()
+	}
+
+	if err := db.DB.Save(&user).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "internal server error"})
+		return
+	}
+
+	c.JSON(http.StatusOK, User2Return(&user))
+}
+
 func handleMe(c *gin.Context) {
 	ok, claims := common_api.ValidateJWT(c)
 	if !ok {
@@ -210,14 +269,12 @@ func handleAll(c *gin.Context) {
 
 	var users []db.User
 	res := db.DB.Find(&users)
-
-	var returnUsers []*UserReturn
-
-	if res.RowsAffected != 1 {
-		log.Printf("Users not found.")
-		c.JSON(http.StatusUnauthorized, returnUsers)
+	if res.Error != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "internal server error"})
 		return
 	}
+
+	var returnUsers []*UserReturn
 
 	for _, user := range users {
 		returnUsers = append(returnUsers, User2Return(&user))

@@ -131,6 +131,10 @@ oc create token github-actions --duration=315576000s
 - `APP_SEAWEED_ACCESS_KEY`: \<random generated secret\> (secret)
 - `APP_SEAWEED_SECRET_KEY`: \<random generated secret\> (secret)
 - `APP_JWT_SECRET`: \<random generated secret\> (secret)
+- `APP_SMTP_SERVER`: SMTP server address with port number (variable)
+- `APP_SMTP_MAIL_FROM`: SMTP mail from address (variable)
+- `APP_SMTP_USER`: SMTP username (variable)
+- `APP_SMTP_PASS`: SMTP password (secret)
 
 4. When pushed to master, the deployment is automatically rolled out.
 
@@ -156,7 +160,8 @@ Request body:
 {
   "username": "admin",
   "password": "Almafa12",
-  "displayname": "Admin"
+  "displayname": "Admin",
+  "email": "admin@example.com",
 }
 ```
 
@@ -167,6 +172,7 @@ Reply:
   "username": "admin",
   "id": 1,
   "displayname": "Admin",
+  "email": "admin@example.com",
   "registered": "2026-03-15T10:04:49.559563836Z",
   "admin": false,
   "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3NzM1NzA4ODksInVzZXJpZCI6MSwiYWRtaW4iOmZhbHNlfQ.LCVVBN9yW1QbhHvwm-75kiEy9SHNZ5DcTcud73qDVwo"
@@ -193,9 +199,41 @@ Reply:
   "username": "admin",
   "id": 1,
   "displayname": "Admin",
+  "email": "admin@example.com",
   "registered": "2026-03-02T07:05:42.002978Z",
   "admin": false,
   "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3NzM1NzMwMjUsInVzZXJpZCI6MSwiYWRtaW4iOmZhbHNlfQ.lITlXB1azc2PbAD-K7Z5bjbyFTMxzjyGkDLqhTlJNbw"
+}
+```
+
+#### PATCH `/api/users/me`
+
+Modify the currently logged in user. The following fields can be modified:
+
+- Display name
+- Email address
+- Password
+
+Request body:
+
+```json
+{
+  "displayname": "",
+  "email": "",
+  "password": ""
+}
+```
+
+Reply:
+
+```json
+{
+  "username": "admin",
+  "id": 1,
+  "displayname": "Admin",
+  "email": "admin@example.com",
+  "registered": "2026-02-26T17:30:24.696482+01:00",
+  "admin": true
 }
 ```
 
@@ -210,6 +248,7 @@ Reply:
   "username": "admin",
   "id": 1,
   "displayname": "Admin",
+  "email": "admin@example.com",
   "registered": "2026-02-26T17:30:24.696482+01:00",
   "admin": true
 }
@@ -227,6 +266,7 @@ Reply:
     "username": "admin",
     "id": 1,
     "displayname": "Admin",
+    "email": "admin@example.com",
     "registered": "2026-03-02T07:05:42.002978Z",
     "admin": false
   }

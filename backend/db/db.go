@@ -19,6 +19,7 @@ type User struct {
 	Password string `gorm:"not null"`
 
 	DisplayName string `gorm:"not null"`
+	Email       string `gorm:"not null"`
 
 	Admin bool `gorm:"default:false"`
 
@@ -68,6 +69,12 @@ func DbConnect() error {
 	DB = db
 
 	models := []any{&User{}, &Image{}, &ImageText{}}
+
+	if !DB.Migrator().HasColumn(&User{}, "Email") {
+		if err := DB.Exec("ALTER TABLE users ADD COLUMN IF NOT EXISTS email text DEFAULT '' NOT NULL").Error; err != nil {
+			return err
+		}
+	}
 
 	for _, model := range models {
 		err = DB.AutoMigrate(model)

@@ -109,4 +109,8 @@ jobs:
           APP_SEAWEED_SECRET_KEY: ${{ secrets.APP_SEAWEED_SECRET_KEY }}
           APP_JWT_SECRET: ${{ secrets.APP_JWT_SECRET }}
           APP_RABBITMQ_PASS: ${{ secrets.APP_RABBITMQ_PASS }}
+          APP_SMTP_SERVER: ${{ vars.APP_SMTP_SERVER }}
+          APP_SMTP_MAIL_FROM: ${{ vars.APP_SMTP_MAIL_FROM }}
+          APP_SMTP_USER: ${{ vars.APP_SMTP_USER }}
+          APP_SMTP_PASS: ${{ secrets.APP_SMTP_PASS }}
         run: ansible-playbook ansible/bme-okd.yaml

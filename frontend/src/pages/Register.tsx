@@ -7,6 +7,7 @@ export default function Register() {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [displayname, setDisplayname] = useState('');
+  const [email, setEmail] = useState('');
   const [error, setError] = useState('');
   const { login } = useAuth();
   const navigate = useNavigate();
@@ -18,7 +19,7 @@ export default function Register() {
       const res = await fetchWithAuth('/api/user/register', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username, password, displayname }),
+        body: JSON.stringify({ username, password, displayname, email }),
       });
       const data = await res.json();
       if (res.ok) {
@@ -26,6 +27,7 @@ export default function Register() {
           username: data.username,
           id: data.id,
           displayname: data.displayname,
+          email: data.email,
           registered: data.registered,
           admin: data.admin,
         });
@@ -51,6 +53,16 @@ export default function Register() {
             className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
             value={displayname}
             onChange={(e) => setDisplayname(e.target.value)}
+          />
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-gray-700">Email</label>
+          <input
+            type="email"
+            required
+            className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
           />
         </div>
         <div>

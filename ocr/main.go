@@ -7,11 +7,17 @@ import (
 	"github.com/kisbogdan-kolos/gallery/backend/db"
 	"github.com/kisbogdan-kolos/gallery/backend/queue"
 	"github.com/kisbogdan-kolos/gallery/backend/storage"
+	"github.com/kisbogdan-kolos/gallery/ocr/email"
 	"github.com/kisbogdan-kolos/gallery/ocr/ocr"
 )
 
 func main() {
-	err := db.DbConnect()
+	err := email.Init()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	err = db.DbConnect()
 	if err != nil {
 		log.Fatal(err)
 	}

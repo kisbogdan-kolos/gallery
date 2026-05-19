@@ -25,6 +25,7 @@ export default function Login() {
           username: data.username,
           id: data.id,
           displayname: data.displayname,
+          email: data.email,
           registered: data.registered,
           admin: data.admin,
         });
